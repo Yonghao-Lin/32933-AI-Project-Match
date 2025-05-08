@@ -1,23 +1,60 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Register</title>
-</head>
-<body>
-<h2>Register</h2>
-<form method="POST">
-    <label>Email:</label>
-    <input type="email" name="email" required><br>
-    <label>Password:</label>
-    <input type="password" name="password" required><br>
-    <label>Role:</label>
-    <select name="role" required>
-        <option value="student">Student</option>
-        <option value="teacher">Teacher</option>
-    </select><br>
-    <button type="submit">Register</button>
-</form>
-<a href="{{ url_for('default_login') }}">Back to Login</a>
-</body>
-</html>
+{% extends "base.html" %}
+{% block content %}
+<div class="flex justify-center items-center min-h-[70vh]">
+  <div class="bg-white p-8 rounded-lg shadow-lg w-full max-w-md">
+    <h2 class="text-2xl font-bold mb-6 text-center">Register</h2>
+
+    {# Flash messages #}
+    {% with messages = get_flashed_messages() %}
+      {% if messages %}
+        {% for msg in messages %}
+          <div class="mb-4 p-4 bg-red-100 border-l-4 border-red-500 text-red-700">
+            {{ msg }}
+          </div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    <form method="POST" class="space-y-4">
+      <div>
+        <label for="email" class="block text-sm font-medium text-gray-700">Email</label>
+        <input id="email" name="email" type="email" required
+               class="mt-1 block w-full rounded-md border-gray-300 shadow-sm
+                      focus:border-blue-500 focus:ring-blue-500">
+      </div>
+
+      <div>
+        <label for="password" class="block text-sm font-medium text-gray-700">Password</label>
+        <input id="password" name="password" type="password" required
+               class="mt-1 block w-full rounded-md border-gray-300 shadow-sm
+                      focus:border-blue-500 focus:ring-blue-500">
+      </div>
+
+      <div>
+        <label for="role" class="block text-sm font-medium text-gray-700">Role</label>
+        <select id="role" name="role" required
+                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm
+                       focus:border-blue-500 focus:ring-blue-500">
+          <option value="student">Student</option>
+          <option value="teacher">Teacher</option>
+        </select>
+      </div>
+
+      <button type="submit"
+              class="w-full inline-flex justify-center py-2 px-4 border border-transparent
+                     rounded-md shadow-sm text-sm font-medium text-white bg-blue-600
+                     hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2
+                     focus:ring-blue-500">
+        Register
+      </button>
+    </form>
+
+    <p class="mt-4 text-center text-sm text-gray-600">
+      Already have an account?
+      <a href="{{ url_for('default_login') }}" class="text-blue-600 hover:text-blue-800">
+        Login here
+      </a>
+    </p>
+  </div>
+</div>
+{% endblock %}
