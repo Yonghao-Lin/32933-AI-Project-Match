@@ -2,114 +2,142 @@
 
 {% block content %}
 <div class="min-h-screen bg-gray-100 py-6">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        
-        <div class="bg-white shadow overflow-hidden sm:rounded-lg mb-8">
-            <div class="px-4 py-5 sm:px-6">
-                <h2 class="text-2xl font-bold">My Projects</h2>
-                <a href="{{ url_for('create_project') }}" class="mt-4 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700">
-                    Add New Project
-                </a>
-            </div>
-            
-            <div class="border-t border-gray-200">
-                {% for project in current_user.projects %}
-                <div class="bg-white px-4 py-5 sm:p-6 border-b border-gray-200">
-                    <div class="flex justify-between items-start">
-                        <div class="flex-grow">
-                            <h3 class="text-lg font-medium text-gray-900">{{ project.name }}</h3>
-                            <p class="mt-1 text-sm text-gray-600">{{ project.description }}</p>
-                            <p class="mt-2 text-sm text-gray-500">Field: {{ project.field }}</p>
-                            {% if project.skill_requirements %}
-                            <p class="mt-2 text-sm text-gray-500">Skills: {{ project.skill_requirements }}</p>
-                            {% endif %}
-                            
-                            <!-- Interested Students List -->
-                            {% if project.interested_students %}
-                            <div class="mt-4">
-                                <h4 class="text-sm font-medium text-gray-700">Interested Students:</h4>
-                                <ul class="mt-2 space-y-2">
-                                    {% for interest in project.interested_students %}
-                                    {% set student = get_user(interest.student_id) %}
-                                    <li class="text-sm text-gray-600">
-                                        {{ student.email }}
-                                        <span class="text-xs text-gray-400">
-                                            ({{ interest.timestamp.strftime('%Y-%m-%d %H:%M') }})
-                                        </span>
-                                    </li>
-                                    {% endfor %}
-                                </ul>
-                            </div>
-                            {% else %}
-                            <p class="mt-4 text-sm text-gray-500">No students have expressed interest yet.</p>
-                            {% endif %}
-                        </div>
-                        
-                        <div class="ml-4">
-                            <a href="{{ url_for('edit_project', project_id=project.id) }}" class="text-blue-600 hover:text-blue-800">
-                                Edit
-                            </a>
-                        </div>
-                    </div>
-                </div>
-                {% endfor %}
-                
-                {% if not current_user.projects %}
-                <div class="px-4 py-5 sm:p-6">
-                    <p class="text-gray-500">No projects yet. Click "Add New Project" to start creating.</p>
-                </div>
-                {% endif %}
-            </div>
-        </div>
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="text-right mb-4">
+      <a href="{{ url_for('logout') }}" class="text-blue-600 hover:text-blue-800">Logout</a>
     </div>
+
+    <div class="bg-white shadow overflow-hidden sm:rounded-lg mb-8">
+      <div class="px-4 py-5 sm:px-6 flex items-center justify-between">
+        <h2 class="text-2xl font-bold">My Projects</h2>
+        <button onclick="openNewProjectModal()"
+                class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700">
+          Add New Project
+        </button>
+      </div>
+      <div class="border-t border-gray-200">
+        {% for project in projects %}
+        <div class="bg-white px-4 py-5 sm:p-6 border-b border-gray-200">
+          <div class="flex justify-between items-start">
+            <div class="flex-grow space-y-2">
+              <h3 class="text-lg font-medium text-gray-900">{{ project.name }}</h3>
+              <p class="mt-1 text-sm text-gray-600">{{ project.description }}</p>
+              <p class="mt-2 text-sm text-gray-500"><strong>Field:</strong> {{ project.field }}</p>
+              {% if project.skill_requirements %}
+              <p class="mt-2 text-sm text-gray-500"><strong>Skills:</strong> {{ project.skill_requirements }}</p>
+              {% endif %}
+              <div class="mt-2 text-sm text-gray-500"><strong>Status:</strong> {{ project.status|capitalize }}</div>
+
+              {% if project.interested_students %}
+              <div class="mt-4">
+                <h4 class="text-sm font-medium text-gray-700">Interested Students:</h4>
+                <ul class="mt-2 space-y-2">
+                  {% for interest in project.interested_students %}
+                  {% set student = get_user(interest.student_id) %}
+                  <li class="text-sm text-gray-600">
+                    {{ student.first_name }} {{ student.last_name }} ({{ student.email }})
+                    <span class="text-xs text-gray-400">
+                      applied on {{ interest.timestamp.strftime('%Y-%m-%d %H:%M') }}
+                    </span>
+                  </li>
+                  {% endfor %}
+                </ul>
+              </div>
+              {% else %}
+              <p class="mt-4 text-sm text-gray-500">No students have expressed interest yet.</p>
+              {% endif %}
+            </div>
+
+            <div class="ml-4 flex flex-col space-y-2">
+              <a href="{{ url_for('edit_project', project_id=project.id) }}"
+                 class="text-blue-600 hover:text-blue-800 text-sm font-medium">Edit</a>
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+
+        {% if projects|length == 0 %}
+        <div class="px-4 py-5 sm:p-6">
+          <p class="text-gray-500">No projects yet. Click "Add New Project" to start creating.</p>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- New Project Modal -->
+    <div id="newProjectModal" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 hidden">
+      <div class="bg-white p-6 rounded-lg shadow-lg w-full max-w-lg">
+        <h3 class="text-lg font-medium mb-4">Add New Project</h3>
+        <form id="newProjectForm" class="space-y-4">
+          <div>
+            <label for="name" class="block text-sm font-medium text-gray-700">Project Name</label>
+            <input type="text" name="name" id="name" required
+                   class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+          </div>
+          <div>
+            <label for="description" class="block text-sm font-medium text-gray-700">Description</label>
+            <textarea name="description" id="description" rows="3" required
+                      class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"></textarea>
+          </div>
+          <div>
+            <label for="field" class="block text-sm font-medium text-gray-700">Field</label>
+            <input type="text" name="field" id="field" required
+                   class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+          </div>
+          <div>
+            <label for="skill_requirements" class="block text-sm font-medium text-gray-700">Skill Requirements (Optional)</label>
+            <textarea name="skill_requirements" id="skill_requirements" rows="2"
+                      class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                      placeholder="e.g., Python, Flask, SQLAlchemy"></textarea>
+          </div>
+          <div class="flex justify-end space-x-4">
+            <button type="button" onclick="closeNewProjectModal()"
+                    class="px-4 py-2 bg-gray-200 text-gray-700 rounded-md">Cancel</button>
+            <button type="submit"
+                    class="px-4 py-2 bg-blue-600 text-white rounded-md">Add Project</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+  </div>
 </div>
 {% endblock %}
 
 {% block scripts %}
 <script>
 function openNewProjectModal() {
-    document.getElementById('newProjectModal').classList.remove('hidden');
+  document.getElementById('newProjectModal').classList.remove('hidden');
 }
-
 function closeNewProjectModal() {
-    document.getElementById('newProjectModal').classList.add('hidden');
+  document.getElementById('newProjectModal').classList.add('hidden');
 }
 
-// Check if the form element exists before adding event listener
 const newProjectForm = document.getElementById('newProjectForm');
 if (newProjectForm) {
-    newProjectForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const formData = new FormData(e.target);
-        const data = {
-            name: formData.get('name'),
-            description: formData.get('description'),
-            field: formData.get('field'),
-            skill_requirements: formData.get('skill_requirements') // Add skill_requirements from modal form
-        };
+  newProjectForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const formData = new FormData(e.target);
+    const data = {
+      name: formData.get('name'),
+      description: formData.get('description'),
+      field: formData.get('field'),
+      skill_requirements: formData.get('skill_requirements')
+    };
 
-        try {
-            const response = await fetch('/api/projects', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(data)
-            });
-
-            if (response.ok) {
-                window.location.reload();
-            } else {
-                const errorData = await response.json();
-                alert('Failed to create project: ' + (errorData.error || 'Please try again.'));
-            }
-        } catch (error) {
-            console.error('Error:', error);
-            alert('Failed to create project, please try again.');
-        }
-    });
-} else {
-    // console.warn("Element with ID 'newProjectForm' not found. Modal functionality might be affected on pages other than teacher_dashboard.");
+    try {
+      const response = await fetch('/api/projects', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify(data)
+      });
+      if (response.ok) { window.location.reload(); }
+      else { const err = await response.json(); alert('Failed: '+(err.error||'')); }
+    } catch (err) {
+      console.error(err);
+      alert('Failed to create project');
+    }
+  });
 }
 </script>
 {% endblock %}
